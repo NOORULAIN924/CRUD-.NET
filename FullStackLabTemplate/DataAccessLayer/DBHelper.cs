@@ -7,8 +7,9 @@ namespace DataAccessLayer
 {
     public class DBHelper
     {
-        public static NpgsqlConnection GetConnection() {
-            return new NpgsqlConnection("Host=aws-0-ap-northeast-2.pooler.supabase.com;Port=6543;Database=postgres;Username=postgres.owquixbxhphzvihqzhpy;Password=FULLSTACK@123;SSL Mode=Require;Trust Server Certificate=true");
+        public static NpgsqlConnection GetConnection()
+        {
+            return new NpgsqlConnection("Host=aws-0-ap-northeast-2.pooler.supabase.com;Port=6543;Database=postgres;Username=postgres.owquixbxhphzvihqzhpy;Password=FULLSTACK@123;SSL Mode=Require;Trust Server Certificate=true;Pooling=false;Timeout=30;Command Timeout=30");
         }
     }
 }

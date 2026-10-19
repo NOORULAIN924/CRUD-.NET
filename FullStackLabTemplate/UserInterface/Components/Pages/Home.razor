@@ -2,15 +2,37 @@
 @rendermode InteractiveServer
 @inject IProductService ProductService
 
-
 <h1>Product Information</h1>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert alert-info">@message</div>
+}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">@(isEditing ? "Edit Product (ID: " + productModel.Id + ")" : "Add New Product")</h5>
+
+        <div class="mb-3">
+            <label class="form-label">Product Name</label>
+            <input class="form-control" @bind="productModel.Name" @bind:event="oninput" placeholder="Enter product name" />
+        </div>
+
+        <button class="btn btn-primary" @onclick="SaveProduct">@(isEditing ? "Update" : "Add")</button>
+
+        @if (isEditing)
+        {
+            <button class="btn btn-secondary ms-2" @onclick="CancelEdit">Cancel</button>
+        }
+    </div>
+</div>
 
 <table class="table table-bordered table-striped table-hover">
     <thead class="table-dark">
         <tr>
             <th>Product ID</th>
             <th>Product Name</th>
-           
+            <th style="width:180px">Actions</th>
         </tr>
     </thead>
 
@@ -20,21 +42,104 @@
             <tr>
                 <td>@item.Id</td>
                 <td>@item.Name</td>
-                
+                <td>
+                    <button class="btn btn-sm btn-warning" @onclick="() => EditProduct(item.Id)">Edit</button>
+                    <button class="btn btn-sm btn-danger ms-1" @onclick="() => DeleteProduct(item.Id)">Delete</button>
+                </td>
             </tr>
         }
     </tbody>
 </table>
 
-
-
-
-@code{
+@code {
     ProductModel productModel = new ProductModel();
     List<ProductModel> products = new List<ProductModel>();
+    bool isEditing = false;
+    string message = "";
 
     protected override void OnInitialized()
     {
+        LoadProducts();
+    }
+
+    void LoadProducts()
+    {
         products = ProductService.GetAllData();
+    }
+
+    void SaveProduct()
+    {
+        if (string.IsNullOrWhiteSpace(productModel.Name))
+        {
+            message = "Product name is required.";
+            return;
+        }
+
+        try
+        {
+            bool success;
+
+            if (isEditing)
+            {
+                success = ProductService.UpdateData(productModel);
+                message = success ? "Product updated." : "Update failed.";
+            }
+            else
+            {
+                success = ProductService.InsertData(productModel);
+                message = success ? "Product added." : "Insert failed.";
+            }
+
+            ResetForm();
+            LoadProducts();
+        }
+        catch (Exception ex)
+        {
+            message = "Error: " + ex.Message;
+        }
+    }
+
+    void EditProduct(int id)
+    {
+        try
+        {
+            var product = ProductService.GetDataById(id);
+            if (product != null)
+            {
+                productModel = product;
+                isEditing = true;
+                message = "";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = "Error: " + ex.Message;
+        }
+    }
+
+    void DeleteProduct(int id)
+    {
+        try
+        {
+            bool success = ProductService.DeleteData(id);
+            message = success ? "Product deleted." : "Delete failed.";
+            LoadProducts();
+        }
+        catch (Exception ex)
+        {
+            message = "Error: " + ex.Message;
+        }
+    }
+
+    void CancelEdit()
+    {
+        ResetForm();
+        message = "";
+    }
+
+    void ResetForm()
+    {
+        productModel = new ProductModel();
+        isEditing = false;
     }
 }
