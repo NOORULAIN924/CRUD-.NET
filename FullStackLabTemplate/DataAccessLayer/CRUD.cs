@@ -11,99 +11,113 @@ namespace DataAccessLayer
         // READ ALL
         public static List<ProductModel> GetAllData()
         {
-            const string Query = @"select ""Id"", ""Name"" FROM ""Products"" ORDER BY ""Id""";
+            const string Query = @"SELECT ""Pid"", ""productname"", ""price"" FROM ""products"" ORDER BY ""Pid""";
 
             List<ProductModel> products = new List<ProductModel>();
 
-            NpgsqlConnection connection = DBHelper.GetConnection();
-            connection.Open();
-
-            NpgsqlCommand command = new NpgsqlCommand(Query, connection);
-            NpgsqlDataReader reader = command.ExecuteReader();
-
-            while (reader.Read())
+            using (NpgsqlConnection connection = DBHelper.GetConnection())
             {
-                ProductModel model = new ProductModel();
-                model.Id = Convert.ToInt32(reader["Id"]);
-                model.Name = reader["Name"].ToString();
+                connection.Open();
+                using (NpgsqlCommand command = new NpgsqlCommand(Query, connection))
+                using (NpgsqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        ProductModel model = new ProductModel();
+                        model.Id = Convert.ToInt32(reader["Pid"]);
+                        model.Name = reader["productname"].ToString();
+                        model.Price = reader["price"] != DBNull.Value ? Convert.ToInt64(reader["price"]) : 0;
 
-                products.Add(model);
+                        products.Add(model);
+                    }
+                }
             }
-            connection.Close();
             return products;
         }
 
         // READ BY ID
         public static ProductModel? GetDataById(int id)
         {
-            const string Query = @"select ""Id"", ""Name"" FROM ""Products"" WHERE ""Id"" = @Id";
+            const string Query = @"SELECT ""Pid"", ""productname"", ""price"" FROM ""products"" WHERE ""Pid"" = @Id";
 
             ProductModel? model = null;
 
-            NpgsqlConnection connection = DBHelper.GetConnection();
-            connection.Open();
-
-            NpgsqlCommand command = new NpgsqlCommand(Query, connection);
-            command.Parameters.AddWithValue("@Id", id);
-            NpgsqlDataReader reader = command.ExecuteReader();
-
-            if (reader.Read())
+            using (NpgsqlConnection connection = DBHelper.GetConnection())
             {
-                model = new ProductModel();
-                model.Id = Convert.ToInt32(reader["Id"]);
-                model.Name = reader["Name"].ToString();
+                connection.Open();
+                using (NpgsqlCommand command = new NpgsqlCommand(Query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    using (NpgsqlDataReader reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            model = new ProductModel();
+                            model.Id = Convert.ToInt32(reader["Pid"]);
+                            model.Name = reader["productname"].ToString();
+                            model.Price = reader["price"] != DBNull.Value ? Convert.ToInt64(reader["price"]) : 0;
+                        }
+                    }
+                }
             }
-            connection.Close();
             return model;
         }
 
         // CREATE
         public static bool InsertData(ProductModel model)
         {
-            const string Query = @"INSERT INTO ""Products"" (""Name"") VALUES (@Name)";
+            const string Query = @"INSERT INTO ""products"" (""productname"", ""price"") VALUES (@Name, @Price)";
 
-            NpgsqlConnection connection = DBHelper.GetConnection();
-            connection.Open();
+            using (NpgsqlConnection connection = DBHelper.GetConnection())
+            {
+                connection.Open();
+                using (NpgsqlCommand command = new NpgsqlCommand(Query, connection))
+                {
+                    command.Parameters.AddWithValue("@Name", (object?)model.Name ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Price", model.Price);
 
-            NpgsqlCommand command = new NpgsqlCommand(Query, connection);
-            command.Parameters.AddWithValue("@Name", (object?)model.Name ?? DBNull.Value);
-
-            int rowsAffected = command.ExecuteNonQuery();
-            connection.Close();
-            return rowsAffected > 0;
+                    int rowsAffected = command.ExecuteNonQuery();
+                    return rowsAffected > 0;
+                }
+            }
         }
 
         // UPDATE
         public static bool UpdateData(ProductModel model)
         {
-            const string Query = @"UPDATE ""Products"" SET ""Name"" = @Name WHERE ""Id"" = @Id";
+            const string Query = @"UPDATE ""products"" SET ""productname"" = @Name, ""price"" = @Price WHERE ""Pid"" = @Id";
 
-            NpgsqlConnection connection = DBHelper.GetConnection();
-            connection.Open();
+            using (NpgsqlConnection connection = DBHelper.GetConnection())
+            {
+                connection.Open();
+                using (NpgsqlCommand command = new NpgsqlCommand(Query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", model.Id);
+                    command.Parameters.AddWithValue("@Name", (object?)model.Name ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Price", model.Price);
 
-            NpgsqlCommand command = new NpgsqlCommand(Query, connection);
-            command.Parameters.AddWithValue("@Id", model.Id);
-            command.Parameters.AddWithValue("@Name", (object?)model.Name ?? DBNull.Value);
-
-            int rowsAffected = command.ExecuteNonQuery();
-            connection.Close();
-            return rowsAffected > 0;
+                    int rowsAffected = command.ExecuteNonQuery();
+                    return rowsAffected > 0;
+                }
+            }
         }
 
         // DELETE
         public static bool DeleteData(int id)
         {
-            const string Query = @"DELETE FROM ""Products"" WHERE ""Id"" = @Id";
+            const string Query = @"DELETE FROM ""products"" WHERE ""Pid"" = @Id";
 
-            NpgsqlConnection connection = DBHelper.GetConnection();
-            connection.Open();
+            using (NpgsqlConnection connection = DBHelper.GetConnection())
+            {
+                connection.Open();
+                using (NpgsqlCommand command = new NpgsqlCommand(Query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
 
-            NpgsqlCommand command = new NpgsqlCommand(Query, connection);
-            command.Parameters.AddWithValue("@Id", id);
-
-            int rowsAffected = command.ExecuteNonQuery();
-            connection.Close();
-            return rowsAffected > 0;
+                    int rowsAffected = command.ExecuteNonQuery();
+                    return rowsAffected > 0;
+                }
+            }
         }
     }
 }
